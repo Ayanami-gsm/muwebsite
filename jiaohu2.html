@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全等三角形平移验证</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .verification-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .triangle-area {
+            width: 300px;
+            height: 150px;
+            position: relative;
+            margin: 30px auto;
+            overflow: hidden;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        #movable-triangle {
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 70px solid #FF5722;
+            position: absolute;
+            top: 40px;
+            left: 30px;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            z-index: 2;
+        }
+        
+        #target-triangle {
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 70px solid rgba(76, 175, 80, 0.3);
+            position: absolute;
+            top: 40px;
+            right: 30px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .slider-container {
+            margin: 40px auto 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .slider-track {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .slider-thumb {
+            width: 30px;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            position: absolute;
+            top: -11px;
+            left: 0;
+            cursor: pointer;
+            touch-action: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            z-index: 3;
+        }
+        
+        .slider-thumb.active {
+            transform: scale(1.2);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        
+        .success-message {
+            color: #4CAF50;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .instructions {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .slider-fill {
+            height: 100%;
+            background-color: #8BC34A;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hint-text {
+            font-size: 14px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .success .slider-thumb {
+            background-color: #2E7D32;
+        }
+        
+        .success .slider-fill {
+            background-color: #2E7D32;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <h1>全等三角形平移验证</h1>
+        <p class="instructions">滑动下方绿色滑块，将红色三角形平移到右侧绿色三角形位置</p>
+        <p class="hint-text">当两个三角形完全重合时，验证将自动通过</p>
+        
+        <div class="triangle-area">
+            <div id="movable-triangle"></div>
+            <div id="target-triangle"></div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-track">
+                <div class="slider-fill" id="slider-fill"></div>
+                <div class="slider-thumb" id="slider-thumb"></div>
+            </div>
+        </div>
+        
+        <div class="success-message" id="success-message">
+            ✓ 验证成功！三角形已完全重合
+        </div>
+        
+        <button id="reset-btn">重新验证</button>
+    </div>
+    
+    <script>
+        const triangle = document.getElementById('movable-triangle');
+        const targetTriangle = document.getElementById('target-triangle');
+        const sliderThumb = document.getElementById('slider-thumb');
+        const sliderTrack = document.querySelector('.slider-track');
+        const sliderFill = document.getElementById('slider-fill');
+        const successMessage = document.getElementById('success-message');
+        const resetBtn = document.getElementById('reset-btn');
+        const container = document.querySelector('.verification-container');
+        
+        const triangleArea = document.querySelector('.triangle-area');
+        const triangleWidth = 80; // 40px * 2
+        const triangleHeight = 70;
+        const startLeft = 30;
+        const startTop = 40;
+        const maxTriangleLeft = triangleArea.offsetWidth - triangleWidth - startLeft;
+        
+        let isDragging = false;
+        let startX, thumbLeft;
+        
+        // 初始化位置
+        function initPositions() {
+            triangle.style.left = startLeft + 'px';
+            triangle.style.top = startTop + 'px';
+            sliderThumb.style.left = '0px';
+            sliderFill.style.width = '0%';
+            successMessage.style.display = 'none';
+            container.classList.remove('success');
+        }
+        
+        // 滑块鼠标/触摸按下事件
+        sliderThumb.addEventListener('mousedown', startDrag);
+        sliderThumb.addEventListener('touchstart', startDrag);
+        
+        function startDrag(e) {
+            isDragging = true;
+            startX = e.clientX || e.touches[0].clientX;
+            thumbLeft = parseInt(sliderThumb.style.left || '0');
+            
+            sliderThumb.classList.add('active');
+            e.preventDefault();
+        }
+        
+        // 滑块拖动事件
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        
+        function drag(e) {
+            if (!isDragging) return;
+            
+            const clientX = e.clientX || e.touches[0].clientX;
+            const deltaX = clientX - startX;
+            const trackWidth = sliderTrack.offsetWidth;
+            let newLeft = thumbLeft + deltaX;
+            
+            // 限制滑块在轨道范围内
+            newLeft = Math.max(0, Math.min(newLeft, trackWidth - sliderThumb.offsetWidth));
+            
+            // 更新滑块位置
+            sliderThumb.style.left = newLeft + 'px';
+            
+            // 计算填充进度
+            const percent = newLeft / (trackWidth - sliderThumb.offsetWidth);
+            sliderFill.style.width = (percent * 100) + '%';
+            
+            // 同步移动三角形
+            const triangleNewLeft = startLeft + (maxTriangleLeft * percent);
+            triangle.style.left = triangleNewLeft + 'px';
+            
+            // 检查是否到达目标位置
+            checkPosition(triangleNewLeft);
+            
+            e.preventDefault();
+        }
+        
+        // 停止拖动
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+        
+        function stopDrag() {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            sliderThumb.classList.remove('active');
+            
+            // 如果接近目标但未完全对齐，自动吸附
+            const triangleRect = triangle.getBoundingClientRect();
+            const targetRect = targetTriangle.getBoundingClientRect();
+            const distance = Math.abs(triangleRect.left - targetRect.left);
+            
+            if (distance < 20 && distance > 3 && !container.classList.contains('success')) {
+                // 计算需要移动的百分比
+                const targetLeft = targetRect.left - triangleArea.getBoundingClientRect().left;
+                const targetPercent = (targetLeft - startLeft) / maxTriangleLeft;
+                const trackWidth = sliderTrack.offsetWidth;
+                const thumbWidth = sliderThumb.offsetWidth;
+                
+                // 动画平滑移动到正确位置
+                animateToPosition(targetPercent * (trackWidth - thumbWidth));
+            }
+        }
+        
+        // 动画平滑移动到指定位置
+        function animateToPosition(targetLeft) {
+            const start = parseInt(sliderThumb.style.left || '0');
+            const distance = targetLeft - start;
+            const duration = 300;
+            const startTime = performance.now();
+            
+            function step(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutQuad(progress);
+                
+                const newLeft = start + (distance * easedProgress);
+                sliderThumb.style.left = newLeft + 'px';
+                
+                // 更新填充和三角形位置
+                const trackWidth = sliderTrack.offsetWidth;
+                const thumbWidth = sliderThumb.offsetWidth;
+                const percent = newLeft / (trackWidth - thumbWidth);
+                sliderFill.style.width = (percent * 100) + '%';
+                
+                const triangleNewLeft = startLeft + (maxTriangleLeft * percent);
+                triangle.style.left = triangleNewLeft + 'px';
+                
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    checkPosition(triangleNewLeft);
+                }
+            }
+            
+            requestAnimationFrame(step);
+        }
+        
+        // 缓动函数
+        function easeOutQuad(t) {
+            return t * (2 - t);
+        }
+        
+        // 检查三角形位置
+        function checkPosition(triangleLeft) {
+            const triangleRect = triangle.getBoundingClientRect();
+            const targetRect = targetTriangle.getBoundingClientRect();
+            
+            // 检查是否完全重合（允许3px误差）
+            const tolerance = 3;
+            const isAligned = Math.abs(triangleRect.left - targetRect.left) < tolerance &&
+                               Math.abs(triangleRect.top - targetRect.top) < tolerance;
+            
+            if (isAligned) {
+                if (!container.classList.contains('success')) {
+                    container.classList.add('success');
+                    successMessage.style.display = 'block';
+                    
+                    // 自动完成最后一点滑动
+                    const trackWidth = sliderTrack.offsetWidth;
+                    const finalLeft = trackWidth - sliderThumb.offsetWidth;
+                    sliderThumb.style.left = finalLeft + 'px';
+                    sliderFill.style.width = '100%';
+                }
+            } else {
+                if (container.classList.contains('success')) {
+                    container.classList.remove('success');
+                    successMessage.style.display = 'none';
+                }
+            }
+        }
+        
+        // 重置按钮
+        resetBtn.addEventListener('click', initPositions);
+        
+        // 初始化
+        initPositions();
+        
+        // 窗口大小改变时重新计算位置
+        window.addEventListener('resize', function() {
+            const triangleLeft = parseInt(triangle.style.left) || startLeft;
+            checkPosition(triangleLeft);
+        });
+    </script>
+</body>
+</html>
