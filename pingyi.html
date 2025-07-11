@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全等三角形基本模型探索</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0f0ff, #c5e5ff);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(0, 80, 180, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 左侧三角形区域 */
+        .triangle-area {
+            flex: 1;
+            background: #f8fcff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .triangle-container {
+            position: relative;
+            width: 90%;
+            height: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .triangle {
+            position: absolute;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .red-triangle {
+            width: 320px;
+            height: 260px;
+            background: rgba(220, 80, 60, 0.85);
+            clip-path: polygon(25% 0%, 0% 100%, 100% 100%);
+            filter: drop-shadow(0 5px 15px rgba(220, 80, 60, 0.3));
+            z-index: 1;
+        }
+        
+        .blue-triangle {
+            width: 320px;
+            height: 260px;
+            background: rgba(50, 120, 230, 0.85);
+            clip-path: polygon(25% 0%, 0% 100%, 100% 100%);
+            filter: drop-shadow(0 5px 15px rgba(50, 120, 230, 0.3));
+            z-index: 2;
+        }
+        
+        /* 右侧控制区域 */
+        .control-area {
+            width: 320px;
+            background: linear-gradient(160deg, #1a3a8c, #2a5cb5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .title {
+            position: absolute;
+            top: 30px;
+            color: white;
+            font-size: 1.8rem;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            padding: 0 20px;
+        }
+        
+        .direction-control {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        
+        .control-btn {
+            background: linear-gradient(145deg, #3498db, #2c80c7);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1/1;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #3da7f0, #3490d6);
+        }
+        
+        .control-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-down { grid-column: 2; grid-row: 3; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+        
+        .position-info {
+            position: absolute;
+            bottom: 30px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px 25px;
+            width: 90%;
+            max-width: 280px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .position-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        
+        .position-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+        
+        .position-value {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        /* 平板适配 */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+                max-width: 600px;
+            }
+            
+            .triangle-area {
+                height: 400px;
+            }
+            
+            .control-area {
+                width: 100%;
+                padding: 100px 20px 70px;
+            }
+            
+            .title {
+                top: 20px;
+                font-size: 1.6rem;
+            }
+            
+            .direction-control {
+                gap: 15px;
+            }
+            
+            .control-btn {
+                font-size: 28px;
+            }
+            
+            .position-info {
+                bottom: 20px;
+                padding: 12px 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.5rem;
+            }
+            
+            .control-btn {
+                font-size: 24px;
+            }
+            
+            .red-triangle, .blue-triangle {
+                width: 260px;
+                height: 210px;
+            }
+            
+            .position-label {
+                font-size: 1rem;
+            }
+            
+            .position-value {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧三角形区域 -->
+        <div class="triangle-area">
+            <div class="triangle-container">
+                <div class="triangle red-triangle"></div>
+                <div class="triangle blue-triangle" id="blue-triangle"></div>
+            </div>
+        </div>
+        
+        <!-- 右侧控制区域 -->
+        <div class="control-area">
+            <h1 class="title">全等三角形基本模型探索</h1>
+            
+            <div class="direction-control">
+                <button class="control-btn btn-up" id="btn-up"><i class="fas fa-arrow-up"></i></button>
+                <button class="control-btn btn-down" id="btn-down"><i class="fas fa-arrow-down"></i></button>
+                <button class="control-btn btn-left" id="btn-left"><i class="fas fa-arrow-left"></i></button>
+                <button class="control-btn btn-right" id="btn-right"><i class="fas fa-arrow-right"></i></button>
+            </div>
+            
+            <div class="position-info">
+                <div class="position-row">
+                    <span class="position-label">水平位置:</span>
+                    <span class="position-value" id="pos-x">0px</span>
+                </div>
+                <div class="position-row">
+                    <span class="position-label">垂直位置:</span>
+                    <span class="position-value" id="pos-y">0px</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const blueTriangle = document.getElementById('blue-triangle');
+            const btnUp = document.getElementById('btn-up');
+            const btnDown = document.getElementById('btn-down');
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            const posX = document.getElementById('pos-x');
+            const posY = document.getElementById('pos-y');
+            
+            let posXValue = 0;
+            let posYValue = 0;
+            const step = 30; // 每次移动的像素值
+            
+            // 移动三角形函数
+            function moveTriangle(dx, dy) {
+                posXValue += dx;
+                posYValue += dy;
+                
+                blueTriangle.style.transform = `translate(${posXValue}px, ${posYValue}px)`;
+                
+                // 更新位置显示
+                posX.textContent = `${posXValue}px`;
+                posY.textContent = `${posYValue}px`;
+            }
+            
+            // 方向按钮事件监听
+            btnUp.addEventListener('click', () => moveTriangle(0, -step));
+            btnDown.addEventListener('click', () => moveTriangle(0, step));
+            btnLeft.addEventListener('click', () => moveTriangle(-step, 0));
+            btnRight.addEventListener('click', () => moveTriangle(step, 0));
+            
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowUp':
+                        moveTriangle(0, -step);
+                        btnUp.classList.add('active');
+                        setTimeout(() => btnUp.classList.remove('active'), 200);
+                        break;
+                    case 'ArrowDown':
+                        moveTriangle(0, step);
+                        btnDown.classList.add('active');
+                        setTimeout(() => btnDown.classList.remove('active'), 200);
+                        break;
+                    case 'ArrowLeft':
+                        moveTriangle(-step, 0);
+                        btnLeft.classList.add('active');
+                        setTimeout(() => btnLeft.classList.remove('active'), 200);
+                        break;
+                    case 'ArrowRight':
+                        moveTriangle(step, 0);
+                        btnRight.classList.add('active');
+                        setTimeout(() => btnRight.classList.remove('active'), 200);
+                        break;
+                }
+            });
+            
+            // 添加初始动画
+            setTimeout(() => {
+                blueTriangle.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
