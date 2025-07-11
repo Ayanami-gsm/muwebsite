@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角形轴对称变换可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #e4e7eb);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            width: 100%;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #3498db;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 15px auto 0;
+            color: #7f8c8d;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 500px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+            position: relative;
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        canvas {
+            display: block;
+            background: white;
+            width: 100%;
+            height: 500px;
+        }
+        
+        .controls {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            animation: slideRight 0.8s ease-out;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .control-title i {
+            font-size: 1.4rem;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        button {
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button i {
+            font-size: 1.2rem;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(45deg, #3ca0db, #2c8fc9);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-alt {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .btn-alt:hover {
+            background: linear-gradient(45deg, #ec7063, #d35400);
+        }
+        
+        .btn-alt2 {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        }
+        
+        .btn-alt2:hover {
+            background: linear-gradient(45deg, #a66bbe, #9b59b6);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-reset:hover {
+            background: linear-gradient(45deg, #34d280, #2ecc71);
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 35px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            animation: fadeIn 1.2s ease-out;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .legend-color {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+        }
+        
+        .red {
+            background: #ff6b6b;
+            border: 2px solid #e74c3c;
+        }
+        
+        .blue {
+            background: #4dabf7;
+            border: 2px solid #2980b9;
+        }
+        
+        .axis {
+            background: #ffd43b;
+            border: 2px solid #f39c12;
+        }
+        
+        .instructions {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 1.4s ease-out;
+        }
+        
+        .instructions h2 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .instructions-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .instruction-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .instruction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instruction-card h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .instruction-card p {
+            color: #7f8c8d;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            width: 100%;
+            margin-top: auto;
+        }
+        
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+        }
+        
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideRight {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 1100px) {
+            .content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .controls {
+                max-width: 100%;
+            }
+            
+            .canvas-container {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            button {
+                min-width: 120px;
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-symmetry"></i> 三角形轴对称变换可视化</h1>
+            <p class="subtitle">红色三角形固定不动，点击按钮生成关于边或高对称的蓝色三角形（内部透明）</p>
+        </header>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color red"></div>
+                <span>原始三角形（红色边框）</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color blue"></div>
+                <span>对称三角形（蓝色边框）</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color axis"></div>
+                <span>对称轴（黄色虚线）</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="canvas-container">
+                <canvas id="triangleCanvas"></canvas>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <div class="control-title">
+                        <i class="fas fa-draw-polygon"></i>
+                        <h2>关于边对称</h2>
+                    </div>
+                    <div class="buttons">
+                        <button id="symAB">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            关于AB对称
+                        </button>
+                        <button id="symBC">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            关于BC对称
+                        </button>
+                        <button id="symAC">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            关于AC对称
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">
+                        <i class="fas fa-mountain"></i>
+                        <h2>关于高对称</h2>
+                    </div>
+                    <div class="buttons">
+                        <button id="symHeightAB" class="btn-alt">
+                            <i class="fas fa-arrow-up"></i>
+                            AB边上的高
+                        </button>
+                        <button id="symHeightBC" class="btn-alt">
+                            <i class="fas fa-arrow-up"></i>
+                            BC边上的高
+                        </button>
+                        <button id="symHeightAC" class="btn-alt">
+                            <i class="fas fa-arrow-up"></i>
+                            AC边上的高
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">
+                        <i class="fas fa-broom"></i>
+                        <h2>画布控制</h2>
+                    </div>
+                    <button id="reset" class="btn-reset">
+                        <i class="fas fa-redo"></i>
+                        重置画布
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+            <div class="instructions-content">
+                <div class="instruction-card">
+                    <h3><i class="fas fa-play"></i> 基本操作</h3>
+                    <p>红色三角形是原始图形，固定在画布中央。点击按钮生成关于指定边或高的轴对称蓝色三角形（内部透明）。所有生成的对称三角形都会保留在画布上。</p>
+                </div>
+                <div class="instruction-card">
+                    <h3><i class="fas fa-ruler-combined"></i> 关于边对称</h3>
+                    <p>选择三角形的任意一条边作为对称轴，生成轴对称的蓝色三角形（内部透明）。对称轴以黄色虚线显示，便于观察对称关系。</p>
+                </div>
+                <div class="instruction-card">
+                    <h3><i class="fas fa-arrow-up"></i> 关于高对称</h3>
+                    <p>选择三角形任意一条边的高作为对称轴，生成轴对称的蓝色三角形（内部透明）。高是从顶点到对边的垂线，同样以黄色虚线显示。</p>
+                </div>
+                <div class="instruction-card">
+                    <h3><i class="fas fa-lightbulb"></i> 学习要点</h3>
+                    <p>观察轴对称变换如何保持图形的大小和形状不变，只改变位置和方向。通过多次对称变换，可以创建复杂的对称图案。</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>几何变换可视化工具 | 探索数学之美 | © 2023 数学可视化实验室</p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('triangleCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // 原始三角形顶点 - 非等腰三角形，尖头偏左，底边水平
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // 调整三角形为非等腰三角形，形状扁平，尖头偏左
+            const triangle = {
+                A: { x: centerX - 40, y: centerY - 80 },   // 顶点A偏左
+                B: { x: centerX - 120, y: centerY + 60 },  // 底边左端点
+                C: { x: centerX + 100, y: centerY + 60 }   // 底边右端点
+            };
+            
+            // 存储生成的对称三角形
+            let symmetricTriangles = [];
+            
+            // 创建水波纹效果
+            function createRipple(e) {
+                const btn = e.currentTarget;
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                
+                btn.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
+            
+            // 绘制原始三角形（红色边框，内部透明）
+            function drawOriginalTriangle() {
+                ctx.strokeStyle = '#ff6b6b';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(triangle.A.x, triangle.A.y);
+                ctx.lineTo(triangle.B.x, triangle.B.y);
+                ctx.lineTo(triangle.C.x, triangle.C.y);
+                ctx.closePath();
+                ctx.stroke();
+                
+                // 标注顶点
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('A', triangle.A.x - 15, triangle.A.y - 10);
+                ctx.fillText('B', triangle.B.x - 20, triangle.B.y + 25);
+                ctx.fillText('C', triangle.C.x + 10, triangle.C.y + 25);
+            }
+            
+            // 绘制对称轴
+            function drawAxis(p1, p2, label) {
+                ctx.save();
+                ctx.strokeStyle = '#ffd43b';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+                ctx.restore();
+                
+                // 绘制对称轴标注
+                ctx.fillStyle = '#f39c12';
+                ctx.font = 'bold 14px Arial';
+                const midX = (p1.x + p2.x) / 2;
+                const midY = (p1.y + p2.y) / 2;
+                ctx.fillText(label || '对称轴', midX + 10, midY - 10);
+            }
+            
+            // 绘制所有对称三角形（蓝色边框，内部透明）
+            function drawSymmetricTriangles() {
+                symmetricTriangles.forEach(tri => {
+                    ctx.strokeStyle = '#4dabf7';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(tri.A.x, tri.A.y);
+                    ctx.lineTo(tri.B.x, tri.B.y);
+                    ctx.lineTo(tri.C.x, tri.C.y);
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    // 绘制对称轴
+                    drawAxis(tri.axisP1, tri.axisP2, tri.label);
+                });
+            }
+            
+            // 关于直线对称的变换函数
+            function reflectPoint(point, p1, p2) {
+                // 计算直线向量
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                
+                // 计算点到直线的投影
+                const t = ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / (dx * dx + dy * dy);
+                const projX = p1.x + t * dx;
+                const projY = p1.y + t * dy;
+                
+                // 计算对称点
+                const symX = 2 * projX - point.x;
+                const symY = 2 * projY - point.y;
+                
+                return { x: symX, y: symY };
+            }
+            
+            // 生成关于AB对称的三角形
+            function symmetricAboutAB() {
+                const symA = reflectPoint(triangle.A, triangle.A, triangle.B);
+                const symB = reflectPoint(triangle.B, triangle.A, triangle.B);
+                const symC = reflectPoint(triangle.C, triangle.A, triangle.B);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: triangle.A,
+                    axisP2: triangle.B,
+                    label: 'AB对称轴'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 生成关于BC对称的三角形
+            function symmetricAboutBC() {
+                const symA = reflectPoint(triangle.A, triangle.B, triangle.C);
+                const symB = reflectPoint(triangle.B, triangle.B, triangle.C);
+                const symC = reflectPoint(triangle.C, triangle.B, triangle.C);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: triangle.B,
+                    axisP2: triangle.C,
+                    label: 'BC对称轴'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 生成关于AC对称的三角形
+            function symmetricAboutAC() {
+                const symA = reflectPoint(triangle.A, triangle.A, triangle.C);
+                const symB = reflectPoint(triangle.B, triangle.A, triangle.C);
+                const symC = reflectPoint(triangle.C, triangle.A, triangle.C);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: triangle.A,
+                    axisP2: triangle.C,
+                    label: 'AC对称轴'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 生成关于AB边上的高对称的三角形
+            function symmetricAboutHeightAB() {
+                // 计算AB边上的高（从C到AB的垂线）
+                const A = triangle.A;
+                const B = triangle.B;
+                const C = triangle.C;
+                
+                // 计算AB向量
+                const ABx = B.x - A.x;
+                const ABy = B.y - A.y;
+                
+                // 计算垂足（投影点）
+                const t = ((C.x - A.x) * ABx + (C.y - A.y) * ABy) / (ABx * ABx + ABy * ABy);
+                const footX = A.x + t * ABx;
+                const footY = A.y + t * ABy;
+                
+                // 对称轴是从C到垂足的直线
+                const axisP1 = { x: C.x, y: C.y };
+                const axisP2 = { x: footX, y: footY };
+                
+                // 计算各点关于高线的对称点
+                const symA = reflectPoint(triangle.A, axisP1, axisP2);
+                const symB = reflectPoint(triangle.B, axisP1, axisP2);
+                const symC = reflectPoint(triangle.C, axisP1, axisP2);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: axisP1,
+                    axisP2: axisP2,
+                    label: 'AB边上的高'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 生成关于BC边上的高对称的三角形
+            function symmetricAboutHeightBC() {
+                // 计算BC边上的高（从A到BC的垂线）
+                const B = triangle.B;
+                const C = triangle.C;
+                const A = triangle.A;
+                
+                // 计算BC向量
+                const BCx = C.x - B.x;
+                const BCy = C.y - B.y;
+                
+                // 计算垂足（投影点）
+                const t = ((A.x - B.x) * BCx + (A.y - B.y) * BCy) / (BCx * BCx + BCy * BCy);
+                const footX = B.x + t * BCx;
+                const footY = B.y + t * BCy;
+                
+                // 对称轴是从A到垂足的直线
+                const axisP1 = { x: A.x, y: A.y };
+                const axisP2 = { x: footX, y: footY };
+                
+                // 计算各点关于高线的对称点
+                const symA = reflectPoint(triangle.A, axisP1, axisP2);
+                const symB = reflectPoint(triangle.B, axisP1, axisP2);
+                const symC = reflectPoint(triangle.C, axisP1, axisP2);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: axisP1,
+                    axisP2: axisP2,
+                    label: 'BC边上的高'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 生成关于AC边上的高对称的三角形
+            function symmetricAboutHeightAC() {
+                // 计算AC边上的高（从B到AC的垂线）
+                const A = triangle.A;
+                const C = triangle.C;
+                const B = triangle.B;
+                
+                // 计算AC向量
+                const ACx = C.x - A.x;
+                const ACy = C.y - A.y;
+                
+                // 计算垂足（投影点）
+                const t = ((B.x - A.x) * ACx + (B.y - A.y) * ACy) / (ACx * ACx + ACy * ACy);
+                const footX = A.x + t * ACx;
+                const footY = A.y + t * ACy;
+                
+                // 对称轴是从B到垂足的直线
+                const axisP1 = { x: B.x, y: B.y };
+                const axisP2 = { x: footX, y: footY };
+                
+                // 计算各点关于高线的对称点
+                const symA = reflectPoint(triangle.A, axisP1, axisP2);
+                const symB = reflectPoint(triangle.B, axisP1, axisP2);
+                const symC = reflectPoint(triangle.C, axisP1, axisP2);
+                
+                symmetricTriangles.push({
+                    A: symA,
+                    B: symB,
+                    C: symC,
+                    axisP1: axisP1,
+                    axisP2: axisP2,
+                    label: 'AC边上的高'
+                });
+                
+                redrawCanvas();
+            }
+            
+            // 重置画布
+            function resetCanvas() {
+                symmetricTriangles = [];
+                redrawCanvas();
+            }
+            
+            // 重绘画布
+            function redrawCanvas() {
+                // 清除画布并填充白色背景
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制所有对称三角形
+                drawSymmetricTriangles();
+                
+                // 绘制原始三角形
+                drawOriginalTriangle();
+            }
+            
+            // 添加按钮事件监听
+            const buttons = [
+                'symAB', 'symBC', 'symAC', 
+                'symHeightAB', 'symHeightBC', 'symHeightAC', 
+                'reset'
+            ];
+            
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                btn.addEventListener('click', function(e) {
+                    createRipple(e);
+                    switch(btnId) {
+                        case 'symAB': symmetricAboutAB(); break;
+                        case 'symBC': symmetricAboutBC(); break;
+                        case 'symAC': symmetricAboutAC(); break;
+                        case 'symHeightAB': symmetricAboutHeightAB(); break;
+                        case 'symHeightBC': symmetricAboutHeightBC(); break;
+                        case 'symHeightAC': symmetricAboutHeightAC(); break;
+                        case 'reset': resetCanvas(); break;
+                    }
+                });
+            });
+            
+            // 初始绘制
+            redrawCanvas();
+            
+            // 窗口大小调整时重新设置画布尺寸
+            window.addEventListener('resize', function() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                redrawCanvas();
+            });
+        });
+    </script>
+</body>
+</html>
