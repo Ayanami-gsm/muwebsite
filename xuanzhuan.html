@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角形旋转动画</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            height: 600px;
+        }
+        
+        .animation-container {
+            flex: 3;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .controls {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #eee;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 24px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        select, input[type="range"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        select:focus, input[type="range"]:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        select {
+            cursor: pointer;
+        }
+        
+        .angle-display {
+            background: #eef5ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 3px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .point-label {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #2c3e50;
+            user-select: none;
+        }
+        
+        .instructions {
+            margin-top: auto;
+            font-size: 13px;
+            color: #777;
+            line-height: 1.6;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            .animation-container {
+                min-height: 400px;
+            }
+            .controls {
+                border-left: none;
+                border-top: 1px solid #eee;
+            }
+        }
+        
+        .triangle-container {
+            width: 300px;
+            height: 300px;
+            position: relative;
+        }
+        
+        .animation-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 20px;
+            border-radius: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            font-weight: 600;
+            z-index: 10;
+        }
+        
+        #triangle-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .red { background: #e74c3c; }
+        .blue { background: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="animation-container">
+            <div class="animation-title">三角形旋转演示</div>
+            
+            <div class="triangle-container">
+                <svg id="triangle-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 红色三角形（固定） -->
+                    <polygon id="red-triangle" points="100,250 300,250 150,50" fill="none" stroke="#e74c3c" stroke-width="6" />
+                    
+                    <!-- 蓝色三角形（可旋转） -->
+                    <polygon id="blue-triangle" points="100,250 300,250 150,50" fill="none" stroke="#3498db" stroke-width="4" />
+                    
+                    <!-- 标记点 -->
+                    <circle id="pointA" cx="100" cy="250" r="6" fill="#2ecc71" />
+                    <circle id="pointB" cx="300" cy="250" r="6" fill="#2ecc71" />
+                    <circle id="pointC" cx="150" cy="50" r="6" fill="#2ecc71" />
+                    
+                    <!-- 中点标记 -->
+                    <circle id="midAB" cx="200" cy="250" r="6" fill="#f39c12" />
+                    <circle id="midBC" cx="225" cy="150" r="6" fill="#f39c12" />
+                    <circle id="midAC" cx="125" cy="150" r="6" fill="#f39c12" />
+                    
+                    <!-- 点标签 -->
+                    <text class="point-label" x="95" y="245">A</text>
+                    <text class="point-label" x="305" y="245">B</text>
+                    <text class="point-label" x="145" y="45">C</text>
+                    <text class="point-label" x="190" y="245">AB</text>
+                    <text class="point-label" x="230" y="145">BC</text>
+                    <text class="point-label" x="115" y="145">AC</text>
+                </svg>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color red"></div>
+                    <span>参考三角形</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color blue"></div>
+                    <span>旋转三角形</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h1>三角形旋转控制面板</h1>
+            
+            <div class="control-group">
+                <label for="rotation-center">旋转中心：</label>
+                <select id="rotation-center">
+                    <option value="A">顶点 A</option>
+                    <option value="B">顶点 B</option>
+                    <option value="C">顶点 C</option>
+                    <option value="AB">边 AB 中点</option>
+                    <option value="BC">边 BC 中点</option>
+                    <option value="AC">边 AC 中点</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="rotation-angle">旋转角度：<span id="angle-value">0°</span></label>
+                <input type="range" id="rotation-angle" min="0" max="180" value="0">
+                <div class="angle-display">当前角度: <span id="current-angle">0</span>°</div>
+            </div>
+            
+            <button id="reset-btn">重置旋转</button>
+            
+            <div class="instructions">
+                <p><strong>操作说明：</strong></p>
+                <ul>
+                    <li>选择旋转中心点（顶点或中点）</li>
+                    <li>拖动滑块调整旋转角度（0°-180°）</li>
+                    <li>点击"重置旋转"按钮恢复初始状态</li>
+                    <li>红色三角形为参考位置，蓝色三角形为旋转结果</li>
+                    <li>三角形尺寸已优化，旋转时完全可见</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const rotationCenter = document.getElementById('rotation-center');
+            const rotationAngle = document.getElementById('rotation-angle');
+            const angleValue = document.getElementById('angle-value');
+            const currentAngle = document.getElementById('current-angle');
+            const resetBtn = document.getElementById('reset-btn');
+            const blueTriangle = document.getElementById('blue-triangle');
+            
+            // 旋转中心坐标映射
+            const rotationPoints = {
+                'A': {x: 100, y: 250},
+                'B': {x: 300, y: 250},
+                'C': {x: 150, y: 50},
+                'AB': {x: 200, y: 250},
+                'BC': {x: 225, y: 150},
+                'AC': {x: 125, y: 150}
+            };
+            
+            // 更新角度显示
+            rotationAngle.addEventListener('input', function() {
+                const angle = this.value;
+                angleValue.textContent = `${angle}°`;
+                currentAngle.textContent = angle;
+                applyRotation(angle);
+            });
+            
+            // 旋转中心改变时更新旋转
+            rotationCenter.addEventListener('change', function() {
+                applyRotation(rotationAngle.value);
+            });
+            
+            // 重置按钮
+            resetBtn.addEventListener('click', function() {
+                rotationAngle.value = 0;
+                angleValue.textContent = '0°';
+                currentAngle.textContent = '0';
+                blueTriangle.setAttribute('transform', '');
+            });
+            
+            // 应用旋转变换
+            function applyRotation(angle) {
+                const center = rotationPoints[rotationCenter.value];
+                blueTriangle.setAttribute('transform', `rotate(${angle}, ${center.x}, ${center.y})`);
+            }
+            
+            // 初始示例动画
+            setTimeout(() => {
+                rotationCenter.value = 'C';
+                rotationAngle.value = 60;
+                angleValue.textContent = '60°';
+                currentAngle.textContent = '60';
+                applyRotation(60);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
